@@ -27,12 +27,11 @@ CREATE TABLE IF NOT EXISTS sessions (
     FOREIGN KEY (computer_id) REFERENCES computers(id)
 );
 
-CREATE TABLE IF NOT EXISTS events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    computer_id INTEGER,
-    type TEXT,           
-    timestamp INTEGER,
-    metadata TEXT
+CREATE INDEX IF NOT EXISTS idx_sessions_computer_id ON sessions(computer_id);
+CREATE TABLE IF NOT EXISTS pins (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pin TEXT NOT NULL UNIQUE,
+  access_level TEXT NOT NULL
 );
 `);
 
