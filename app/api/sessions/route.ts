@@ -32,14 +32,13 @@ export async function PATCH(request: Request) {
   const { sessionId } = await request.json();
 
   const now = Math.floor(Date.now() / 1000);
-  let sql: string;
 
   const result = db
     .prepare(
       `
     UPDATE sessions
     SET ended_at = ?
-    WHERE id = ? AND ended_at IS NULL
+    WHERE computer_id = ? AND ended_at IS NULL
     RETURNING id, computer_id, start_time, end_time, ended_at;
     `,
     )
