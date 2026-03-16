@@ -38,8 +38,7 @@ export async function PATCH(request: Request) {
       `
     UPDATE sessions
     SET ended_at = ?
-    WHERE computer_id = ? AND ended_at IS NULL
-    RETURNING id, computer_id, start_time, end_time, ended_at;
+    WHERE computer_id = ? AND ended_at IS NULL;
     `,
     )
     .run(now, sessionId);

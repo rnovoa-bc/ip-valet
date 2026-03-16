@@ -7,7 +7,7 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 export function Button({ variant = "blue", children, ...props }: ButtonProps) {
   const base =
     "px-4 py-2 rounded-lg font-medium transition-all duration-150 active:scale-95 flex " +
-    "justify-center items-center gap-2 shadow-sm shadow-zinc-700 dark:shadow-zinc-300";
+    "justify-center items-center gap-2 shadow-sm shadow-zinc-700 dark:shadow-zinc-300 w-40";
 
   const getStyles = () => {
     switch (variant) {

@@ -4,6 +4,7 @@ import { useState } from "react";
 
 export default function LoginPage() {
   const [pin, setPin] = useState("");
+
   const login = () => {
     fetch("/api/login", {
       method: "POST",

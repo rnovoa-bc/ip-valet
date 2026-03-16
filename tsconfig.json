@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "scripts/session-timer.js", "scripts/session-timer.js"  ],
   "exclude": ["node_modules"]
 }

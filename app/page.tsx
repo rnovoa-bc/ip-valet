@@ -1,6 +1,12 @@
 "use client";
 import { useState, useEffect, use } from "react";
-import { SquarePower, ScreenShare, ScreenShareOff } from "lucide-react";
+import {
+  SquarePower,
+  ScreenShare,
+  ScreenShareOff,
+  X,
+  RefreshCcw,
+} from "lucide-react";
 import { Button } from "./components/Button";
 
 interface Computer {
@@ -10,6 +16,7 @@ interface Computer {
   description: string;
   enabled: boolean;
   available: boolean;
+  remaining?: number;
 }
 
 export default function Home() {
@@ -19,9 +26,64 @@ export default function Home() {
   useEffect(() => {
     fetch("/api/computers")
       .then((res) => res.json())
-      .then(setComputers)
+      .then((data) => {
+        setComputers(data);
+        data.forEach((pc: Computer) => {
+          if (pc.enabled && !pc.available) {
+            fetch(`/api/computers/remaining/${pc.id}`)
+              .then((res) => res.json())
+              .then((data) => {
+                const remaining = data.remaining;
+
+                setComputers((prev) =>
+                  prev.map((p) => (p.id === pc.id ? { ...p, remaining } : p)),
+                );
+              })
+              .catch((err) =>
+                console.error(
+                  `Error fetching remaining time for computer ${pc.id}:`,
+                  err,
+                ),
+              );
+          }
+        });
+      })
       .catch((err) => console.error("Error fetching computers:", err));
   }, [renderTrigger]);
+
+  const fetchRemainingTime = async (computerId: number) => {
+    return fetch(`/api/computers/remaining/${computerId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const remaining = data.remaining;
+        console.log(
+          `Remaining time for computer ${computerId}: ${remaining} minutes`,
+        );
+        setComputers((prev) =>
+          prev.map((pc) => (pc.id === computerId ? { ...pc, remaining } : pc)),
+        );
+        return remaining;
+      })
+      .catch((err) => {
+        console.error("Error fetching remaining time:", err);
+        return 0;
+      });
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setComputers((prev) => {
+        prev.forEach((pc) => {
+          if (pc.enabled && !pc.available) {
+            fetchRemainingTime(pc.id);
+          }
+        });
+        return prev;
+      });
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const lend = (id: number) => {
     fetch("/api/sessions", {
@@ -34,6 +96,7 @@ export default function Home() {
       .then((res) => res.json())
       .then(() => setRenderTrigger((prev) => prev + 1))
       .catch((err) => console.error("Error creating session:", err));
+    fetchRemainingTime(id);
   };
 
   const cancel = (id: number) => {
@@ -49,23 +112,52 @@ export default function Home() {
       .catch((err) => console.error("Error ending session:", err));
   };
 
+  const updateComputerStatus = (id: number, enabled: boolean) => {
+    fetch("/api/computers", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ computerId: id, enabled }),
+    })
+      .then((res) => res.json())
+      .then(() => setRenderTrigger((prev) => prev + 1))
+      .catch((err) => console.error("Error updating computer status:", err));
+  };
+
+  const updateComputerEndTime = (id: number) => {
+    fetch("/api/sessions/renew", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ computerId: id }),
+    })
+      .then((res) => res.json())
+      .then(() => setRenderTrigger((prev) => prev + 1))
+      .catch((err) => console.error("Error updating computer status:", err));
+  };
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-center mt-10 mb-10">
-        Ordinadors OPAC-Internet
+        Ordinadors d'OPAC
       </h1>
 
       <table className="min-w-full border border-zinc-200 text-sm">
         <thead className="bg-zinc-100 dark:bg-zinc-800">
           <tr>
             <th className="px-4 py-2 text-left font-medium text-zinc-700 dark:text-zinc-300 border-b">
-              Name
+              Nom
             </th>
             <th className="px-4 py-2 text-left font-medium text-zinc-700 dark:text-zinc-300 border-b">
               IP
             </th>
             <th className="px-4 py-2 text-left font-medium text-zinc-700 dark:text-zinc-300 border-b">
-              Description
+              Descripció
+            </th>
+            <th className="px-4 py-2 text-left font-medium text-zinc-700 dark:text-zinc-300 border-b">
+              Temps restant
             </th>
             <th className="px-4 py-2 text-left font-medium text-zinc-700 dark:text-zinc-300 border-b"></th>
           </tr>
@@ -76,7 +168,8 @@ export default function Home() {
               <td className="px-4 py-2 border-b">{pc.name}</td>
               <td className="px-4 py-2 border-b font-mono">{pc.ip}</td>
               <td className="px-4 py-2 border-b">{pc.description}</td>
-              <td>
+              <td className="px-4 py-2 border-b">{pc.remaining || ""}</td>
+              <td className="px-4 py-2 border-b">
                 <div className="flex justify-end gap-2 m-2">
                   {pc.enabled ? (
                     <>
@@ -85,21 +178,36 @@ export default function Home() {
                           <Button variant="blue" onClick={() => lend(pc.id)}>
                             <ScreenShare size={24} /> Llogar 1h
                           </Button>
+                          <Button
+                            variant="zinc"
+                            onClick={() => updateComputerStatus(pc.id, false)}
+                          >
+                            <X size={24} /> Deshabilitar
+                          </Button>
                         </>
                       ) : (
                         <>
+                          <Button
+                            variant="blue"
+                            onClick={() => updateComputerEndTime(pc.id)}
+                          >
+                            <RefreshCcw size={24} /> Renovar 1h
+                          </Button>
                           <Button variant="zinc" onClick={() => cancel(pc.id)}>
                             <ScreenShareOff size={24} /> Tancar
                           </Button>
                         </>
                       )}
-                      <Button variant="red">
-                        <SquarePower size={24} /> Deshabilita
-                      </Button>
                     </>
                   ) : (
                     <>
-                      <Button variant="green">
+                      <Button
+                        variant="green"
+                        onClick={() => {
+                          cancel(pc.id);
+                          updateComputerStatus(pc.id, true);
+                        }}
+                      >
                         <SquarePower size={24} /> Habilita
                       </Button>
                     </>

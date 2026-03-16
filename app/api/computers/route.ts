@@ -27,3 +27,27 @@ export async function GET() {
 
   return NextResponse.json(computers);
 }
+
+async function updateComputerStatus(computerId: number, enabled: boolean) {
+  const result = db
+    .prepare(
+      `
+    UPDATE computers
+    SET enabled = ?
+    WHERE id = ?
+    RETURNING id, name, ip, description, enabled;
+    `,
+    )
+    .run(enabled ? 1 : 0, computerId);
+
+  if (result.changes === 0) {
+    return NextResponse.json({ error: "Computer not found" }, { status: 404 });
+  }
+
+  return NextResponse.json(result);
+}
+
+export async function PATCH(request: Request) {
+  const { computerId, enabled } = await request.json();
+  return updateComputerStatus(computerId, enabled);
+}

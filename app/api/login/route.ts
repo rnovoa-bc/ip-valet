@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const isValid = await bcrypt.compare(pin, process.env.CONSOLE_PIN!);
 
   if (!isValid) {
-    return NextResponse.json({ error: "Invalid PIN" }, { status: 401 });
+    return NextResponse.json({ error: "Invàlid PIN" }, { status: 401 });
   }
 
   const res = NextResponse.json({ success: true });
