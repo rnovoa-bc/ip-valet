@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { sendCommand } from "@/lib/send-message";
 
 export async function POST(request: Request) {
   console.log("Received session creation request");
@@ -24,6 +25,11 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+  const ip = db
+    .prepare(`SELECT ip FROM computers WHERE id = ?`)
+    .get(computerId)?.ip;
+
+  sendCommand(ip, 5555, `open`);
 
   return NextResponse.json(result);
 }
@@ -49,6 +55,12 @@ export async function PATCH(request: Request) {
       { status: 404 },
     );
   }
+  const ip = db
+    .prepare(`SELECT ip FROM computers WHERE id = ?`)
+    .get(sessionId)?.ip;
+  console.log("IP to close:", ip);
+
+  sendCommand(ip, 5555, `close`);
 
   return NextResponse.json(result);
 }

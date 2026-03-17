@@ -85,7 +85,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const lend = (id: number) => {
+  const lend = (id: number, ip: string) => {
     fetch("/api/sessions", {
       method: "POST",
       headers: {
@@ -175,7 +175,10 @@ export default function Home() {
                     <>
                       {pc.available ? (
                         <>
-                          <Button variant="blue" onClick={() => lend(pc.id)}>
+                          <Button
+                            variant="blue"
+                            onClick={() => lend(pc.id, pc.ip)}
+                          >
                             <ScreenShare size={24} /> Llogar 1h
                           </Button>
                           <Button

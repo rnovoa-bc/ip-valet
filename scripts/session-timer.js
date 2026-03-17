@@ -1,6 +1,7 @@
-import { exec } from "child_process";
-import fs from "fs";
-import Database from "better-sqlite3";
+const { exec } = require("child_process");
+const fs = require("fs");
+const Database = require("better-sqlite3");
+const net = require("net");
 
 const dbPath = process.env.DB_PATH || "./data/library.db";
 
@@ -17,6 +18,21 @@ try {
   lastContent = fs.readFileSync(ipsFile, "utf8");
 } catch {
   lastContent = "";
+}
+
+function sendCommand(host, port, command) {
+  const client = new net.Socket();
+
+  client.connect(port, host, () => {
+    console.log("connected");
+
+    client.write(command);
+    client.end();
+  });
+
+  client.on("error", (err) => {
+    console.error("connection error:", err.message);
+  });
 }
 
 setInterval(() => {
@@ -36,6 +52,10 @@ setInterval(() => {
 
   if (content === lastContent) {
     return;
+  }
+
+  for (const ip of ips) {
+    sendCommand(ip, 5555, "open");
   }
 
   lastContent = content;
