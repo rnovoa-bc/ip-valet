@@ -41,3 +41,5 @@ yarn-error.log*
 next-env.d.ts
 ipvalet-release.tar.gz
 ecosystem.config.js
+
+/data/library.db
