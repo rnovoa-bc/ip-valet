@@ -1,6 +1,10 @@
 import net from "net";
 
-export function sendCommand(host: string, port: number, command: string) {
+export default function sendCommand(
+  host: string,
+  port: number,
+  command: string,
+) {
   const client = new net.Socket();
 
   client.connect(port, host, () => {

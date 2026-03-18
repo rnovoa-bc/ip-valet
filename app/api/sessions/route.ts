@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sendCommand } from "@/lib/send-message";
+import sendCommand from "@/lib/send-command";
+
+type IpRow = {
+  ip: string;
+};
 
 export async function POST(request: Request) {
   console.log("Received session creation request");
   const { computerId, duration } = await request.json();
 
   const now = Math.floor(Date.now() / 1000);
-  const endTime = now + duration * 3600;
+  // const endTime = now + duration * 3600;
+  const endTime = now + duration * 60; // for testing, use minutes instead of hours
 
   const result = db
     .prepare(
@@ -26,10 +31,12 @@ export async function POST(request: Request) {
     );
   }
   const ip = db
-    .prepare(`SELECT ip FROM computers WHERE id = ?`)
-    .get(computerId)?.ip;
+    .prepare(`SELECT ip FROM computers WHERE id = ? LIMIT 1`)
+    .get(computerId) as IpRow | undefined;
 
-  sendCommand(ip, 5555, `open`);
+  if (ip) {
+    sendCommand(ip.ip, 5555, `open`);
+  }
 
   return NextResponse.json(result);
 }
@@ -55,12 +62,15 @@ export async function PATCH(request: Request) {
       { status: 404 },
     );
   }
-  const ip = db
-    .prepare(`SELECT ip FROM computers WHERE id = ?`)
-    .get(sessionId)?.ip;
+  const row = db
+    .prepare<IpRow>(`SELECT ip FROM computers WHERE id = ? LIMIT 1`)
+    .get(sessionId) as IpRow | undefined;
+  const ip = row?.ip;
   console.log("IP to close:", ip);
 
-  sendCommand(ip, 5555, `close`);
+  if (ip) {
+    sendCommand(ip, 5555, `close`);
+  }
 
   return NextResponse.json(result);
 }

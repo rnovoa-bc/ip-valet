@@ -78,6 +78,7 @@ export default function Home() {
             fetchRemainingTime(pc.id);
           }
         });
+        setRenderTrigger((prev) => prev + 1);
         return prev;
       });
     }, 60000);

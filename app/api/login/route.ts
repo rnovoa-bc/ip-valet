@@ -3,10 +3,11 @@ import bcrypt from "bcrypt";
 
 export async function POST(req: NextRequest) {
   const { pin } = await req.json();
+  const pinHash = process.env.CONSOLE_PIN || "";
   console.log("Received login attempt with PIN:", pin);
-  console.log("Expected PIN hash:", process.env.CONSOLE_PIN);
+  console.log("Expected PIN hash:", pinHash);
 
-  const isValid = await bcrypt.compare(pin, process.env.CONSOLE_PIN!);
+  const isValid = await bcrypt.compare(pin, pinHash);
 
   if (!isValid) {
     return NextResponse.json({ error: "Invàlid PIN" }, { status: 401 });
